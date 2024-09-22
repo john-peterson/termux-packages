@@ -15,6 +15,7 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --enable-true-color
 --mandir=$TERMUX_PREFIX/share/man
 --with-openssl
+--with-libsixel
 --without-brotli
 --without-zstd
 "
