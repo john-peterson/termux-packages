@@ -646,10 +646,10 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			termux_step_get_source
 			cd "$TERMUX_PKG_SRCDIR"
 			termux_step_post_get_source
-			termux_step_handle_host_build
+			$TERMUX_ON_DEVICE_BUILD || termux_step_handle_host_build
 		fi
 
-		termux_step_setup_toolchain
+		$TERMUX_ON_DEVICE_BUILD || termux_step_setup_toolchain
 
 		if [ "$TERMUX_CONTINUE_BUILD" == "false" ]; then
 			termux_step_get_dependencies_python
@@ -658,6 +658,8 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			cd "$TERMUX_PKG_SRCDIR"
 			termux_step_pre_configure
 		fi
+
+		$TERMUX_ON_DEVICE_BUILD && export TERMUX_PREFIX=$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX
 
 		# Even on continued build we might need to setup paths
 		# to tools so need to run part of configure step
@@ -676,11 +678,17 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 		termux_step_post_make_install
 		termux_step_install_service_scripts
 		termux_step_install_license
+
+		if $TERMUX_ON_DEVICE_BUILD; then
+		export TERMUX_PREFIX=$prefix
+		else
 		cd "$TERMUX_PKG_MASSAGEDIR"
 		termux_step_extract_into_massagedir
 		termux_step_massage
 		cd "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX_CLASSICAL"
 		termux_step_post_massage
+		fi
+
 		cd "$TERMUX_PKG_MASSAGEDIR"
 		if [ "$TERMUX_PACKAGE_FORMAT" = "debian" ]; then
 			termux_step_create_debian_package
