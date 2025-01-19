@@ -1,4 +1,9 @@
 termux_step_setup_toolchain() {
+	if $TERMUX_ON_DEVICE_BUILD;then
+		READELF=readelf
+		STRIP=strip
+		return
+	fi
 	if [ "$TERMUX_PACKAGE_LIBRARY" = "bionic" ]; then
 		TERMUX_STANDALONE_TOOLCHAIN="$TERMUX_COMMON_CACHEDIR/android-r${TERMUX_NDK_VERSION}-api-${TERMUX_PKG_API_LEVEL}"
 		[ "$TERMUX_PKG_METAPACKAGE" = "true" ] && return
