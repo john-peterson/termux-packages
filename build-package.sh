@@ -1,6 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC1117
-
+set -x
 # Setting the TMPDIR variable
 : "${TMPDIR:=/tmp}"
 export TMPDIR
