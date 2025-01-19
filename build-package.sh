@@ -1,6 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC1117
-
+set -x
 # Setting the TMPDIR variable
 : "${TMPDIR:=/tmp}"
 export TMPDIR
@@ -640,7 +640,7 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			termux_step_get_source
 			cd "$TERMUX_PKG_SRCDIR"
 			termux_step_post_get_source
-			termux_step_handle_host_build
+			$TERMUX_ON_DEVICE_BUILD || termux_step_handle_host_build
 		fi
 
 		termux_step_setup_toolchain
@@ -671,7 +671,7 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 		termux_step_install_service_scripts
 		termux_step_install_license
 		cd "$TERMUX_PKG_MASSAGEDIR"
-		termux_step_extract_into_massagedir
+		$TERMUX_ON_DEVICE_BUILD || termux_step_extract_into_massagedir
 		termux_step_massage
 		cd "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX_CLASSICAL"
 		termux_step_post_massage
