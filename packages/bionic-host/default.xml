@@ -33,6 +33,7 @@
   <project path="external/lzma" name="platform/external/lzma" groups="pdk" />
   <project path="external/safe-iop" name="platform/external/safe-iop" groups="pdk" />
   <project path="external/zlib" name="platform/external/zlib" groups="pdk" />
+  <project path="frameworks/native" name="platform/frameworks/native" groups="pdk" />
   <project path="kernel/tests" name="kernel/tests" />
   <project path="prebuilts/build-tools" name="platform/prebuilts/build-tools" groups="pdk" clone-depth="1" />
   <project path="prebuilts/clang/host/linux-x86" name="platform/prebuilts/clang/host/linux-x86" groups="pdk" clone-depth="1" />
@@ -47,5 +48,6 @@
   <project path="prebuilts/python/linux-x86/2.7.5" name="platform/prebuilts/python/linux-x86/2.7.5" groups="linux,pdk,pdk-cw-fs,pdk-fs" clone-depth="1" />
   <project path="prebuilts/sdk" name="platform/prebuilts/sdk" groups="pdk" clone-depth="1" />
   <project path="prebuilts/tools" name="platform/prebuilts/tools" groups="pdk,tools" clone-depth="1" />
+  <project path="hardware/libhardware" name="platform/hardware/libhardware" groups="pdk" />
   <project path="system/core" name="platform/system/core" groups="pdk" />
 </manifest>
