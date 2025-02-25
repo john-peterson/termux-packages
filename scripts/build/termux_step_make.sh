@@ -5,13 +5,14 @@ termux_step_make() {
 	if [ "$TERMUX_QUIET_BUILD" = true ]; then
 		QUIET_BUILD="-s"
 	fi
-
+read
 	if test -f build.ninja; then
 		ninja -j $TERMUX_PKG_MAKE_PROCESSES
 	elif ls ./*.cabal &>/dev/null; then
 		cabal build
 	elif ls ./*akefile &>/dev/null || [ ! -z "$TERMUX_PKG_EXTRA_MAKE_ARGS" ]; then
 		if [ -z "$TERMUX_PKG_EXTRA_MAKE_ARGS" ]; then
+			read
 			make -j $TERMUX_PKG_MAKE_PROCESSES $QUIET_BUILD
 		else
 			make -j $TERMUX_PKG_MAKE_PROCESSES $QUIET_BUILD ${TERMUX_PKG_EXTRA_MAKE_ARGS}
