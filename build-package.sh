@@ -503,7 +503,7 @@ while (($# >= 1)); do
 				termux_error_exit "./build-package.sh: option '-I' is available only when TERMUX_APP_PACKAGE is 'com.termux'"
 			else
 				export TERMUX_INSTALL_DEPS=true
-				export TERMUX_NO_CLEAN=true
+				export TERMUX_NO_CLEAN_DEP=true
 			fi
 			;;
 		-L) export TERMUX_GLOBAL_LIBRARY=true;;
