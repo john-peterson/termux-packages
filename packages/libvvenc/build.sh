@@ -42,6 +42,11 @@ termux_step_pre_configure1() {
 	LDFLAGS+=" -landroid-posix-semaphore"
 }
 
+termux_step_post_configure() {
+	! grep -r -l fuse-ld=gold $TERMUX_PKG_BUILDDIR
+	# test $? -ne 0 && echo error! try again &
+}
+
 termux_step_post_massage1() {
 	local _GUARD_FILE="lib/${TERMUX_PKG_NAME}.so"
 	if [ ! -e "${_GUARD_FILE}" ]; then
