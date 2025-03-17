@@ -4,9 +4,11 @@ TERMUX_PKG_MAINTAINER="@termux"
 TERMUX_PKG_VERSION="0"
 TERMUX_PKG_SRCURL=git+https://github.com/fraunhoferhhi/vvenc
 TERMUX_PKG_GIT_BRANCH=master
-TERMUX_NO_CLEAN_SRC=true
 TERMUX_PKG_DEPENDS="libandroid-posix-semaphore, libc++"
-TERMUX_PKG_BUILD_DEPENDS="llvmgold"
+# TERMUX_PKG_BUILD_DEPENDS="llvmgold"
+TERMUX_NO_CLEAN_SRC=true
+TERMUX_PKG_MAKE_PROCESSES=4
+TERMUX_PKG_EXTRA_MAKE_ARGS="-d explain"
 
 termux_step_pre_configure1() {
 	# Do not forget to bump revision of reverse dependencies and rebuild them
