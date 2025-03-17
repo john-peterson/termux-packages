@@ -1,6 +1,12 @@
 #!/bin/bash
 # shellcheck disable=SC1117
 
+function timestamp() {
+	echo
+date
+	echo
+}
+
 # Setting the TMPDIR variable
 : "${TMPDIR:=/tmp}"
 export TMPDIR
@@ -171,6 +177,7 @@ source "$TERMUX_SCRIPTDIR/scripts/build/setup/termux_setup_protobuf.sh"
 
 # Setup variables used by the build. Not to be overridden by packages.
 # shellcheck source=scripts/build/termux_step_setup_variables.sh
+date
 source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_setup_variables.sh"
 
 # Save away and restore build setups which may change between builds.
@@ -669,6 +676,7 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 
 		# Even on continued build we might need to setup paths
 		# to tools so need to run part of configure step
+timestamp
 		cd "$TERMUX_PKG_BUILDDIR"
 		termux_step_configure
 
@@ -676,6 +684,7 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			cd "$TERMUX_PKG_BUILDDIR"
 			termux_step_post_configure
 		fi
+timestamp
 		cd "$TERMUX_PKG_BUILDDIR"
 		termux_step_make
 		cd "$TERMUX_PKG_BUILDDIR"
