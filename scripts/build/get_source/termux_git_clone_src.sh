@@ -40,6 +40,8 @@ termux_git_clone_src() {
 		echo "$TERMUX_PKG_VERSION" > $TMP_CHECKOUT_VERSION
 	fi
 
+	if ! $TERMUX_NO_CLEAN_SRC; then
 	rm -rf $TERMUX_PKG_SRCDIR
 	cp -Rf $TMP_CHECKOUT $TERMUX_PKG_SRCDIR
+	fi
 }
