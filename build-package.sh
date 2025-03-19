@@ -663,9 +663,11 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			termux_step_get_dependencies_python
 			termux_step_patch_package
 			termux_step_replace_guess_scripts
+		fi
+
+			$TERMUX_CONTINUE_BUILD && echo try to not reset the build just set the version variables without touching any build files
 			cd "$TERMUX_PKG_SRCDIR"
 			termux_step_pre_configure
-		fi
 
 		# Even on continued build we might need to setup paths
 		# to tools so need to run part of configure step
