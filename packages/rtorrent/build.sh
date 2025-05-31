@@ -10,3 +10,7 @@ TERMUX_PKG_DEPENDS="libc++, libcurl, libtorrent, libxmlrpc, ncurses"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --with-xmlrpc-c
 "
+
+termux_step_post_make_install() {
+
+}
