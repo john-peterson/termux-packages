@@ -1,12 +1,16 @@
 termux_step_massage() {
+
+	# $TERMUX_FAST_BUILD && return || true
+
 	[ "$TERMUX_PKG_METAPACKAGE" = "true" ] && return
 
-	cd "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX_CLASSICAL"
+	# cd "$TERMUX_PKG_MASSAGEDIR_BASE"
 
+	# to-do remove 
 	local ADDING_PREFIX=""
-	if [ "$TERMUX_PACKAGE_LIBRARY" = "glibc" ]; then
-		ADDING_PREFIX="glibc/"
-	fi
+	# if ! $TERMUX_PKG_PROOT && [ "$TERMUX_PACKAGE_LIBRARY" = "glibc" ]; then
+	# 	ADDING_PREFIX="glibc/"
+	# fi
 
 	# Remove lib/charset.alias which is installed by gettext-using packages:
 	rm -f lib/charset.alias
@@ -87,7 +91,8 @@ termux_step_massage() {
 				continue
 			fi
 			if head -c 100 "$file" | head -n 1 | grep -E "^#!.*/bin/.*" | grep -q -E -v -e "^#! ?/system" -e "^#! ?$TERMUX_PREFIX_CLASSICAL"; then
-				sed --follow-symlinks -i -E "1 s@^#\!(.*)/bin/(.*)@#\!$TERMUX_PREFIX/bin/\2@" "$file"
+				# sed --follow-symlinks -i -E "1 s@^#\!(.*)/bin/(.*)@#\!$TERMUX_PREFIX/bin/\2@" "$file"
+				sed --follow-symlinks -i -E "1 s@^#\!(.*)/bin/(.*)@#\!/bin/env \2@" "$file"
 			fi
 		done < <(find -L . -type f -print0)
 	fi
@@ -131,7 +136,9 @@ termux_step_massage() {
 		if [ -f "$TERMUX_PKG_SRCDIR"/configure.ac -o -f "$TERMUX_PKG_SRCDIR"/configure.in ]; then
 			termux_error_exit "No files in package. Maybe you need to run autoreconf -fi before configuring."
 		else
-			termux_error_exit "No files in package."
+			echo "error massage folder empty "
+			$TERMUX_SAFE_BUILD && echo "disable --safe or add TERMUX_PREFIX_INSTALL in scripts/configure"
+			exit
 		fi
 	fi
 
@@ -153,7 +160,7 @@ termux_step_massage() {
 						root_file="$j"
 						continue
 					fi
-					ln -sf "${TERMUX_PREFIX_CLASSICAL}/${root_file:2}" "${j}"
+					ln -sf "${TERMUX_PREFIX_RUN_CLASSICAL}/${root_file:2}" "${j}"
 				done
 			done
 		fi
@@ -179,7 +186,7 @@ termux_step_massage() {
 	# Check so that package is not affected by
 	# https://github.com/android/ndk/issues/1614, or
 	# https://github.com/termux/termux-packages/issues/9944
-	if [[ "${TERMUX_PACKAGE_LIBRARY}" == "bionic" ]]; then
+	if ! $TERMUX_FAST_BUILD && [[ "${TERMUX_PACKAGE_LIBRARY}" == "bionic" ]]; then
 		echo "INFO: READELF=${READELF} ... $(command -v ${READELF})"
 		export pattern_file_undef=$(mktemp)
 		echo "INFO: Generating undefined symbols regex to ${pattern_file_undef}"
@@ -347,6 +354,43 @@ termux_step_massage() {
 		test -f ./${ADDING_PREFIX}lib/ghc-*/settings && rm -rf ./${ADDING_PREFIX}lib/ghc-*/settings
 	fi
 
+	if $TERMUX_SAFE_BUILD; then
+		termux_replace_prefix $TERMUX_PREFIX_INSTALL "$TERMUX_PREFIX_BASE"
+	fi
+
+	if $TERMUX_PKG_PROOT; then
+		termux_replace_prefix $TERMUX_PREFIX_UNSAFE "$TERMUX_PREFIX_BASE"
+		termux_replace_prefix $TERMUX_PREFIX_CLASSICAL_UNSAFE "$TERMUX_PREFIX_BASE"
+		# exit
+	fi
+
+	if $TERMUX_PKG_PROOT; then
+		# exit
+
+		set +e
+		# pushd "$TERMUX_PKG_MASSAGEDIR_BASE" > /dev/null
+		mkdir usr
+		for d in bin include lib sbin share ; do
+			mv $d usr/ -v
+		done
+
+		for d in usr/etc usr/var; do
+			mv $d . -v 
+		done
+	
+		# tree
+		# exit
+
+		for d in bin include lib sbin share usr/etc usr/var; do
+			if test -d $d; then
+				echo $d folder not allowed. ignore with -f -c
+				$TERMUX_FORCE_BUILD || exit
+			fi
+		done
+		# popd > /dev/null
+		set -e
+	fi
+
 	# .. remove empty directories (NOTE: keep this last):
 	find . -type d -empty -delete
 }
@@ -376,4 +420,40 @@ get_epoch() {
 	[[ -e /proc/uptime ]] && cut -d"." -f1 /proc/uptime && return
 	[[ -n "$(command -v date)" ]] && date +%s && return
 	echo 0
+}
+
+termux_replace_prefix() {
+	set +e
+	local dir old new
+	dir="$TERMUX_PKG_MASSAGEDIR_BASE"
+	old=$1
+	new=$2
+	printf '%s\0' "${replaced_prefix[@]}" | grep -q -F -x -z -- "$old" && return
+	replaced_prefix+=($old)
+	test $old = "$new" && return
+	echo termux - massage - replacing prefix $old with $new ...
+	# pushd $dir > /dev/null
+	while IFS= read -r f; do
+		# echo $f
+		if file $f | grep -q "ASCII"; then
+			# echo found text file $f
+			if grep -q $old $f; then
+				sed -i "s,$old,$new,g" $f
+				echo replaced prefix in $f
+			fi
+		fi
+
+		if file $f | grep -q "ELF"; then
+			# echo found bin file $f
+			patchelf --set-interpreter $PATH_DYNAMIC_LINKER $f
+			if strings $f | grep -q $old; then
+				echo prefix found inside $f add -f -c to ignore
+				$TERMUX_FORCE_BUILD || exit
+			fi
+		fi
+
+	done < <(find -type f)
+	# exit
+	set -e
+	# popd > /dev/null
 }
