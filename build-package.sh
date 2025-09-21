@@ -438,6 +438,7 @@ _show_usage() {
 	echo "  -o Specify directory where to put built packages. Default: output/."
 	echo "  --format Specify package output format (debian, pacman)."
 	echo "  --library Specify library of package (bionic, glibc)."
+	echo "  --proot glibc proot build"
 	exit 1
 }
 
@@ -458,6 +459,11 @@ while (($# >= 1)); do
 			else
 				termux_error_exit "./build-package.sh: option '--format' requires an argument"
 			fi
+			;;
+		--proot)
+			export TERMUX_PACKAGE_LIBRARY="glibc"
+			export TERMUX_PKG_PROOT=true
+			export TERMUX_PACKAGES_DIRECTORIES="proot gpkg"
 			;;
 		--library)
 			if [ $# -ge 2 ]; then
@@ -667,7 +673,8 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			termux_step_pre_configure
 		fi
 
-		$TERMUX_ON_DEVICE_BUILD && export TERMUX_PREFIX=$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX
+	# don't over write any system files on device find another solution 
+		$TERMUX_ON_DEVICE_BUILD && export TERMUX_PREFIX=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX
 
 		# Even on continued build we might need to setup paths
 		# to tools so need to run part of configure step
@@ -687,6 +694,13 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 		termux_step_install_service_scripts
 		termux_step_install_license
 
+		if $TERMUX_ON_DEVICE_BUILD || $TERMUX_PKG_PROOT; then
+		root=$prefix;	$TERMUX_PKG_PROOT && root=
+		# this worked for dpkg it thinks it was installed in / . other apps might write the install path inside the binary and require another solution 
+		find $TERMUX_PREFIX -type f -exec file {} + | awk -F: '/ASCII text/ {print $1}' | xargs sed -i "s,$TERMUX_PREFIX,$root,g"
+		fi
+
+		# this is an attempt to avoid tar -N on device because it might not be reversible if it has over written files
 		if $TERMUX_ON_DEVICE_BUILD; then
 		export TERMUX_PREFIX=$prefix
 		else
@@ -694,12 +708,15 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 		termux_step_extract_into_massagedir
 		termux_step_massage
 		cd "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX_CLASSICAL"
-		termux_step_post_massage
 		# At the final stage (when the package is archiving) it is better to use commands from the system
 		export PATH="/usr/bin:$PATH"
 		fi
+		termux_step_post_massage
 
 		cd "$TERMUX_PKG_MASSAGEDIR"
+		if $TERMUX_PKG_PROOT; then
+			cd "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX"
+		fi
 		if [ "$TERMUX_PACKAGE_FORMAT" = "debian" ]; then
 			termux_step_create_debian_package
 		elif [ "$TERMUX_PACKAGE_FORMAT" = "pacman" ]; then
