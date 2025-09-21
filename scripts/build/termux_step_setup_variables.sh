@@ -8,6 +8,8 @@ termux_step_setup_variables() {
 	: "${TERMUX_PKG_MAKE_PROCESSES:="$(nproc)"}"
 	: "${TERMUX_NO_CLEAN:="false"}"
 	: "${TERMUX_PKG_API_LEVEL:="24"}"
+	: "${TERMUX_PKG_PROOT:="false"}"
+	: "${TERMUX_SAFE_BUILD:="false"}"
 	: "${TERMUX_CONTINUE_BUILD:="false"}"
 	: "${TERMUX_QUIET_BUILD:="false"}"
 	: "${TERMUX_WITHOUT_DEPVERSION_BINDING:="false"}"
@@ -35,7 +37,10 @@ termux_step_setup_variables() {
 		export TERMUX_PACKAGE_LIBRARY="bionic"
 	fi
 
-	if [ "$TERMUX_PACKAGE_LIBRARY" = "glibc" ]; then
+	if $TERMUX_PKG_PROOT; then
+		export TERMUX_PREFIX=/usr
+		export CGCT_APP_PREFIX="$TERMUX_PREFIX"
+	elif [ "$TERMUX_PACKAGE_LIBRARY" = "glibc" ]; then
 		export TERMUX_PREFIX="$TERMUX_PREFIX/glibc"
 		if [ "$TERMUX_ON_DEVICE_BUILD" = "false" ] && [ "$TERMUX_PREFIX" != "$CGCT_DEFAULT_PREFIX" ]; then
 			export CGCT_APP_PREFIX="$TERMUX_PREFIX"
@@ -44,6 +49,7 @@ termux_step_setup_variables() {
 			TERMUX_PKG_NAME="$(termux_package__add_prefix_glibc_to_package_name "${TERMUX_PKG_NAME}")"
 		fi
 	fi
+
 
 	if [ "$TERMUX_ON_DEVICE_BUILD" = "true" ]; then
 		# For on-device builds cross-compiling is not supported so we can
@@ -96,7 +102,7 @@ termux_step_setup_variables() {
 			if [ -n "${LD_PRELOAD-}" ]; then
 				unset LD_PRELOAD
 			fi
-			if [ ! -d "${TERMUX_PREFIX}/bin" ]; then
+			if [ ! -d "${TERMUX_PREFIX_CLASSICAL}/glibc/bin" ]; then
 				termux_error_exit "Glibc components are not installed, run './scripts/setup-termux-glibc.sh'"
 			fi
 		else
@@ -155,6 +161,18 @@ termux_step_setup_variables() {
 	TERMUX_PKG_HOSTBUILD_DIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/host-build
 	TERMUX_PKG_LICENSE_FILE="" # Relative path from $TERMUX_PKG_SRCDIR to LICENSE file. It is installed to $TERMUX_PREFIX/share/$TERMUX_PKG_NAME.
 	TERMUX_PKG_MASSAGEDIR=$TERMUX_TOPDIR/$TERMUX_PKG_NAME/massage
+
+	if $TERMUX_SAFE_BUILD; then
+		TERMUX_PREFIX=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX
+		echo "safe prefix $prefix -> $TERMUX_PREFIX"
+	fi
+
+	if $TERMUX_PKG_PROOT; then
+		TERMUX_PKG_MASSAGEDIR_ROOT="$TERMUX_PKG_MASSAGEDIR/$prefix"
+	else
+		TERMUX_PKG_MASSAGEDIR_ROOT="$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX_CLASSICAL"
+	fi
+
 	TERMUX_PKG_METAPACKAGE=false
 	TERMUX_PKG_NO_ELF_CLEANER=false # set this to true to disable running of termux-elf-cleaner on built binaries
 	TERMUX_PKG_NO_REPLACE_GUESS_SCRIPTS=false # if true, do not find and replace config.guess and config.sub in source directory
