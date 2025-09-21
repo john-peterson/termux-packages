@@ -8,6 +8,7 @@ termux_step_setup_variables() {
 	: "${TERMUX_PKG_MAKE_PROCESSES:="$(nproc)"}"
 	: "${TERMUX_NO_CLEAN:="false"}"
 	: "${TERMUX_PKG_API_LEVEL:="24"}"
+	: "${TERMUX_PKG_PROOT:="false"}"
 	: "${TERMUX_CONTINUE_BUILD:="false"}"
 	: "${TERMUX_QUIET_BUILD:="false"}"
 	: "${TERMUX_WITHOUT_DEPVERSION_BINDING:="false"}"
@@ -40,7 +41,7 @@ termux_step_setup_variables() {
 		if [ "$TERMUX_ON_DEVICE_BUILD" = "false" ] && [ "$TERMUX_PREFIX" != "$CGCT_DEFAULT_PREFIX" ]; then
 			export CGCT_APP_PREFIX="$TERMUX_PREFIX"
 		fi
-		if ! termux_package__is_package_name_have_glibc_prefix "$TERMUX_PKG_NAME"; then
+		if ! termux_package__is_package_name_have_glibc_prefix "$TERMUX_PKG_NAME" && ! $TERMUX_PKG_PROOT; then
 			TERMUX_PKG_NAME="$(termux_package__add_prefix_glibc_to_package_name "${TERMUX_PKG_NAME}")"
 		fi
 	fi
