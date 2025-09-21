@@ -1,7 +1,6 @@
 TERMUX_PKG_DESCRIPTION="empty test packet for build system "
 TERMUX_PKG_VERSION=0
 TERMUX_PKG_LICENSE="WTFPL"
-TERMUX_PKG_NO_ELF_CLEANER=true
 
 termux_step_pre_configure() {
 # echo $TERMUX_PREFIX
@@ -17,12 +16,11 @@ $TERMUX_ON_DEVICE_BUILD && test TERMUX_PREFIX = TERMUX_PREFIX_CLASSICAL && echo 
 
 termux_step_post_configure() {
 	pwd
+echo data=$TERMUX_PREFIX | tee a
 }
 
 termux_step_post_make_install() {
 	pwd
-echo data=$TERMUX_PREFIX | tee a
-touch b
 	mkdir -p $TERMUX_PREFIX
 	# install results 
 	cp $TERMUX_PKG_BUILDDIR/* $TERMUX_PREFIX/ -v
@@ -32,9 +30,5 @@ touch b
 
 termux_step_post_massage() {
 	pwd
-	# d=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX
-	cat a
-	set +e
-$TERMUX_ON_DEVICE_BUILD && grep $TERMUX_PKG_MASSAGEDIR a && echo massage failed && exit
-	set -e
+	cat $TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX/a
 }

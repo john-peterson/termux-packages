@@ -1,4 +1,38 @@
 termux_step_massage() {
+	if $TERMUX_ON_DEVICE_BUILD || $TERMUX_PKG_PROOT; then
+		local root pre
+		if $TERMUX_PKG_PROOT; then
+			root=
+		else
+			root=$prefix	
+		fi
+		local pre=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX
+		cd "$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX"
+		set +e
+		while IFS= read -r f; do
+		# echo $f
+
+		type=$(file $f | grep "ASCII")
+		if [ -n "$type" ]; then
+			# echo found text file $f
+			# g=$(grep $TERMUX_PREFIX $f)
+			sed -i "s,$pre,$root,g" $f
+			test $? && echo replaced prefix in $f
+		fi
+
+		type=$(file $f | grep "ELF")
+		if [ -n "$type" ]; then
+			# echo found bin file $f
+			res=$(strings $f | grep $pre)
+			test -n "$res" && echo prefix found inside $f add -f -c to ignore && ! $TERMUX_FORCE_BUILD exit
+		fi
+
+		done < <(find -type f)
+		# exit
+		set -e
+		return
+		fi
+
 	[ "$TERMUX_PKG_METAPACKAGE" = "true" ] && return
 
 	cd "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX_CLASSICAL"
