@@ -438,10 +438,14 @@ _show_usage() {
 	echo "  -o Specify directory where to put built packages. Default: output/."
 	echo "  --format Specify package output format (debian, pacman)."
 	echo "  --library Specify library of package (bionic, glibc)."
+	echo "  --proot glibc proot build"
+	echo "  --safe install to massage dir"
+	echo "  --fast skip as much as possible "
 	exit 1
 }
 
 declare -a PACKAGE_LIST=()
+export TERMUX_PKG_PROOT=false
 
 if [ "$#" -lt 1 ]; then _show_usage; fi
 while (($# >= 1)); do
@@ -489,6 +493,7 @@ while (($# >= 1)); do
 		-D) TERMUX_IS_DISABLED=true;;
 		-f) TERMUX_FORCE_BUILD=true;;
 		-F) TERMUX_FORCE_BUILD_DEPENDENCIES=true && TERMUX_FORCE_BUILD=true;;
+		--fast) TERMUX_FAST_BUILD=true;;
 		-i)
 			if [ "$TERMUX_ON_DEVICE_BUILD" = "true" ]; then
 				termux_error_exit "./build-package.sh: option '-i' is not available for on-device builds"
@@ -507,10 +512,12 @@ while (($# >= 1)); do
 			fi
 			;;
 		-L) export TERMUX_GLOBAL_LIBRARY=true;;
+		--proot) TERMUX_PKG_PROOT=true;;
 		-q) export TERMUX_QUIET_BUILD=true;;
 		-Q) set -x;;
 		-w) export TERMUX_WITHOUT_DEPVERSION_BINDING=true;;
 		-s) export TERMUX_SKIP_DEPCHECK=true;;
+		--safe)	TERMUX_SAFE_BUILD=true;;
 		-o)
 			if [ $# -ge 2 ]; then
 				shift 1
@@ -607,6 +614,9 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			export TERMUX_PKG_BUILDER_DIR=$(realpath "${PACKAGE_LIST[i]}")
 		else
 			# Package name:
+			if $TERMUX_PKG_PROOT; then
+				TERMUX_PACKAGES_DIRECTORIES="proot gpkg"
+			fi
 			for package_directory in $TERMUX_PACKAGES_DIRECTORIES; do
 				if [ -d "${TERMUX_SCRIPTDIR}/${package_directory}/${TERMUX_PKG_NAME}" ]; then
 					export TERMUX_PKG_BUILDER_DIR=${TERMUX_SCRIPTDIR}/$package_directory/$TERMUX_PKG_NAME
@@ -627,6 +637,11 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 
 		termux_step_setup_variables
 		termux_step_handle_buildarch
+
+		# if $TERMUX_SAFE_BUILD; then
+		# 	TERMUX_PREFIX=$TERMUX_PREFIX_RUN
+		# 	echo "restore prefix $TERMUX_PREFIX -> $TERMUX_PREFIX_RUN"
+		# fi
 
 		if [ "$TERMUX_CONTINUE_BUILD" == "false" ]; then
 			termux_step_setup_build_folders
@@ -654,10 +669,15 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			termux_step_get_source
 			cd "$TERMUX_PKG_SRCDIR"
 			termux_step_post_get_source
-			$TERMUX_ON_DEVICE_BUILD || termux_step_handle_host_build
+			$TERMUX_FAST_BUILD || termux_step_handle_host_build
 		fi
 
-		$TERMUX_ON_DEVICE_BUILD || termux_step_setup_toolchain
+		$TERMUX_FAST_BUILD || termux_step_setup_toolchain
+
+		# if $TERMUX_SAFE_BUILD; then
+		# 	TERMUX_PREFIX=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX
+		# 	echo "safe prefix $prefix -> $TERMUX_PREFIX"
+		# fi
 
 		if [ "$TERMUX_CONTINUE_BUILD" == "false" ]; then
 			termux_step_get_dependencies_python
@@ -666,8 +686,6 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			cd "$TERMUX_PKG_SRCDIR"
 			termux_step_pre_configure
 		fi
-
-		$TERMUX_ON_DEVICE_BUILD && export TERMUX_PREFIX=$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX
 
 		# Even on continued build we might need to setup paths
 		# to tools so need to run part of configure step
@@ -687,17 +705,15 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 		termux_step_install_service_scripts
 		termux_step_install_license
 
-		if $TERMUX_ON_DEVICE_BUILD; then
-		export TERMUX_PREFIX=$prefix
-		else
-		cd "$TERMUX_PKG_MASSAGEDIR"
-		termux_step_extract_into_massagedir
+		if ! $TERMUX_SAFE_BUILD; then
+			cd "$TERMUX_PKG_MASSAGEDIR"
+			termux_step_extract_into_massagedir
+		fi
 		termux_step_massage
-		cd "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX_CLASSICAL"
+		cd "$TERMUX_PKG_MASSAGEDIR_ROOT"
 		termux_step_post_massage
 		# At the final stage (when the package is archiving) it is better to use commands from the system
 		export PATH="/usr/bin:$PATH"
-		fi
 
 		cd "$TERMUX_PKG_MASSAGEDIR"
 		if [ "$TERMUX_PACKAGE_FORMAT" = "debian" ]; then
