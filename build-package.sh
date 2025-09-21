@@ -438,6 +438,7 @@ _show_usage() {
 	echo "  -o Specify directory where to put built packages. Default: output/."
 	echo "  --format Specify package output format (debian, pacman)."
 	echo "  --library Specify library of package (bionic, glibc)."
+	echo "  --proot glibc proot build"
 	exit 1
 }
 
@@ -458,6 +459,11 @@ while (($# >= 1)); do
 			else
 				termux_error_exit "./build-package.sh: option '--format' requires an argument"
 			fi
+			;;
+		--proot)
+			export TERMUX_PACKAGE_LIBRARY="glibc"
+			export TERMUX_PKG_PROOT=true
+			export TERMUX_PACKAGES_DIRECTORIES="proot gpkg"
 			;;
 		--library)
 			if [ $# -ge 2 ]; then
@@ -700,6 +706,9 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 		fi
 
 		cd "$TERMUX_PKG_MASSAGEDIR"
+		if $TERMUX_PKG_PROOT; then
+			cd "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX"
+		fi
 		if [ "$TERMUX_PACKAGE_FORMAT" = "debian" ]; then
 			termux_step_create_debian_package
 		elif [ "$TERMUX_PACKAGE_FORMAT" = "pacman" ]; then
