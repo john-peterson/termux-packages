@@ -90,7 +90,7 @@ source "$TERMUX_SCRIPTDIR/scripts/build/setup/termux_setup_crystal.sh"
 
 # Utility function for setting up DotNet toolchain.
 # shellcheck source=scripts/build/setup/termux_setup_dotnet.sh
-source "$TERMUX_SCRIPTDIR/scripts/build/setup/termux_setup_dotnet.sh"
+# source "$TERMUX_SCRIPTDIR/scripts/build/setup/termux_setup_dotnet.sh"
 
 # Utility function for setting up Flang toolchain.
 # shellcheck source=scripts/build/setup/termux_setup_flang.sh
@@ -211,7 +211,7 @@ source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_start_build.sh"
 
 # Cleans up files from already built packages. Not to be overridden by packages.
 # shellcheck source=scripts/build/termux_step_start_build.sh
-source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_cleanup_packages.sh"
+# source "$TERMUX_SCRIPTDIR/scripts/build/termux_step_cleanup_packages.sh"
 
 # Download or build dependencies. Not to be overridden by packages.
 # shellcheck source=scripts/build/termux_step_create_timestamp_file.sh
@@ -647,7 +647,7 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			termux_step_setup_build_folders
 		fi
 
-		termux_step_cleanup_packages
+		# termux_step_cleanup_packages
 		termux_step_start_build
 
 		if ! termux_check_package_in_building_packages_list "${TERMUX_PKG_BUILDER_DIR#${TERMUX_SCRIPTDIR}/}"; then
