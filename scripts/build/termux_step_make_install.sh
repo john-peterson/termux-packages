@@ -1,7 +1,6 @@
 # shellcheck disable=SC2086
 termux_step_make_install() {
 	[ "$TERMUX_PKG_METAPACKAGE" = "true" ] && return
-
 	if test -f build.ninja; then
 		ninja -j $TERMUX_PKG_MAKE_PROCESSES $TERMUX_PKG_MAKE_INSTALL_TARGET 
 	elif test -f setup.py || test -f pyproject.toml || test -f setup.cfg; then
@@ -22,6 +21,8 @@ termux_step_make_install() {
 		fi
 	elif test -f Cargo.toml; then
 		termux_setup_rust
+		# this has no effect 
+		# CARGO_TARGET_DIR=$TERMUX_PKG_CARGO_INSTALL_TARGET \
 		cargo install \
 			--jobs $TERMUX_PKG_MAKE_PROCESSES \
 			--path . \
@@ -29,7 +30,7 @@ termux_step_make_install() {
 			--locked \
 			--no-track \
 			--target $CARGO_TARGET_NAME \
-			--root $TERMUX_PREFIX_BASE \
+			--root $TERMUX_PKG_CARGO_INSTALL_TARGET \
 			$TERMUX_PKG_EXTRA_CONFIGURE_ARGS
 	fi
 }
