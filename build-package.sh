@@ -685,7 +685,8 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			$TERMUX_FAST_BUILD || termux_step_handle_host_build
 		fi
 
-		$TERMUX_FAST_BUILD || termux_step_setup_toolchain
+		# $TERMUX_FAST_BUILD || \
+			termux_step_setup_toolchain
 
 		# if $TERMUX_SAFE_BUILD; then
 		# 	TERMUX_PREFIX=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX
