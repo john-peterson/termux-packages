@@ -4,8 +4,8 @@ TERMUX_PKG_LICENSE="WTFPL"
 TERMUX_PKG_NO_ELF_CLEANER=true
 
 termux_step_post_get_source() {
-
-cp  $TERMUX_PKG_BUILDER_DIR/* $TERMUX_PKG_SRCDIR/ -r
+cp  $TERMUX_PKG_BUILDER_DIR/* $TERMUX_PKG_SRCDIR/ 
+cp  $TERMUX_PKG_BUILDER_DIR/Cargo* $TERMUX_PKG_BUILDDIR/
 }
 
 termux_step_pre_configure() {
@@ -65,9 +65,10 @@ tree $TERMUX_PKG_MASSAGEDIR
 	mkdir -p $TERMUX_PKG_MASSAGEDIR_BASE
 
 	# install results 
-	cp $TERMUX_PKG_BUILDDIR/* $TERMUX_PKG_MASSAGEDIR_BASE/ -r 
+	cp $TERMUX_PKG_BUILDDIR/{bin,etc} $TERMUX_PKG_MASSAGEDIR_BASE/ -r 
 	# cp $TERMUX_PKG_BUILDDIR/* $TERMUX_PREFIX_INSTALL/ -rv
 # install -Dm700 -t $TERMUX_PREFIX/ $TERMUX_PKG_SRCDIR/a
+	cp $TERMUX_PKG_BUILDDIR/*android/release/test $TERMUX_PKG_MASSAGEDIR_BASE/bin/ 
 echo install done
 echo
 
@@ -83,6 +84,7 @@ termux_step_post_massage() {
 	# env | sort | ack ANDROID
 	# env | sort | ack CFLAG
 	(echo CC=$CC)
-	$TERMUX_PKG_BUILDDIR/test
+	# $TERMUX_PKG_BUILDDIR/test
+	$TERMUX_PKG_MASSAGEDIR_BASE/bin/test
 	set -e
 }
