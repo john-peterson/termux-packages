@@ -9,7 +9,7 @@ TERMUX_PKG_SHA256=77ae1665a337f1c48c61d6b961db3e52119b38e58884d1c89684af31f87bc5
 TERMUX_PKG_BUILD_IN_SRC=true
 
 termux_step_make() {
-	sh Build.sh -r
+	sh Build.sh -r -o CFLAGS="-DHAVE_PERSISTENT_HISTORY=1"
 }
 
 termux_step_make_install() {
