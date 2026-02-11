@@ -6,32 +6,52 @@ TERMUX_PKG_MAINTAINER="@termux"
 TERMUX_PKG_VERSION="25.3.5"
 TERMUX_PKG_SRCURL=https://archive.mesa3d.org/mesa-${TERMUX_PKG_VERSION}.tar.xz
 TERMUX_PKG_SHA256=be472413475082df945e0f9be34f5af008baa03eb357e067ce5a611a2d44c44b
+# TERMUX_PKG_SRCURL=git+https://github.com/john-peterson/mesa
+# TERMUX_PKG_GIT_BRANCH=android
+# TERMUX_PKG_SRCURL=git+https://gitlab.freedesktop.org/mesa/mesa
+# TERMUX_PKG_GIT_BRANCH=main
 TERMUX_PKG_AUTO_UPDATE=true
-TERMUX_PKG_DEPENDS="libandroid-shmem, libc++, libdrm, libglvnd, libllvm (<< $TERMUX_LLVM_NEXT_MAJOR_VERSION), libwayland, libx11, libxext, libxfixes, libxshmfence, libxxf86vm, ncurses, vulkan-loader, zlib, zstd"
+TERMUX_PKG_DEPENDS="libandroid-spawn,libandroid-shmem, libc++, libdrm, libglvnd, libllvm (<< $TERMUX_LLVM_NEXT_MAJOR_VERSION), libwayland, libx11, libxext, libxfixes, libxshmfence, libxxf86vm, ncurses, vulkan-loader, zlib, zstd"
 TERMUX_PKG_SUGGESTS="mesa-dev"
 TERMUX_PKG_BUILD_DEPENDS="libclc, libwayland-protocols, libxrandr, llvm, llvm-tools, mlir, spirv-tools, xorgproto"
 TERMUX_PKG_BREAKS="osmesa, osmesa-demos"
 TERMUX_PKG_CONFLICTS="libmesa, ndk-sysroot (<= 25b), osmesa"
 TERMUX_PKG_REPLACES="libmesa, osmesa"
 
+# TERMUX_PKG_API_LEVEL=25
+TERMUX_PKG_API_LEVEL=26
+# TERMUX_PKG_MAKE_PROCESSES=1
+# TERMUX_PKG_EXTRA_MAKE_ARGS="-j1"
 # FIXME: Set `shared-llvm` to disabled if possible
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --cmake-prefix-path $TERMUX_PREFIX
 -Dgbm=enabled
 -Dopengl=true
 -Degl=enabled
--Degl-native-platform=x11
+-Degl-native-platform=android
+-Dplatform-sdk-version=$TERMUX_PKG_API_LEVEL
 -Dgles1=disabled
 -Dgles2=enabled
 -Dglx=dri
 -Dllvm=enabled
 -Dshared-llvm=enabled
--Dplatforms=x11,wayland
--Dgallium-drivers=llvmpipe,softpipe,virgl,zink
--Dgallium-rusticl=true
+-Dplatforms=x11,android
+-Dgallium-drivers=zink,panfrost
 -Dglvnd=enabled
 -Dxmlconfig=disabled
+-Dandroid-libbacktrace=disabled
+-Dandroid-stub=true
+-Dbuild-tests=false
+-Dmesa-clc=system
+-Dprecomp-compiler=system
 "
+# -Dmesa-clc=enabled
+# -Dmesa-clc=system
+# -Dmesa-clc=auto
+# -Dinstall-mesa-clc=true
+# -Dinstall-mesa-clc=false
+# -Dgallium-rusticl=true
+# -Dgallium-drivers=llvmpipe,panfrost,softpipe,virgl,zink
 
 termux_step_post_get_source() {
 	# Do not use meson wrap projects
@@ -50,7 +70,7 @@ termux_step_pre_configure() {
 	: "${CARGO_HOME:=${HOME}/.cargo}"
 	export CARGO_HOME
 
-	cargo install --force --locked bindgen-cli
+	# cargo install --force --locked bindgen-cli
 	if [[ "${TERMUX_ON_DEVICE_BUILD}" == "false" ]]; then
 		export BINDGEN_EXTRA_CLANG_ARGS="--sysroot ${TERMUX_STANDALONE_TOOLCHAIN}/sysroot"
 		case "${TERMUX_ARCH}" in

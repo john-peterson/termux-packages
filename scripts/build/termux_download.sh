@@ -32,6 +32,7 @@ termux_download() {
 	fi
 
 	local TMPFILE
+		# -s
 	local -a CURL_OPTIONS=(
 		--fail               # Consider 4xx and 5xx responses as failures
 		--retry 5            # Retry up to 5 times on transient failures

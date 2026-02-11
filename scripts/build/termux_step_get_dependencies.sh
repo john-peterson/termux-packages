@@ -40,7 +40,7 @@ termux_step_get_dependencies() {
 				if ! TERMUX_WITHOUT_DEPVERSION_BINDING="$([[ "${cyclic_dependence}" == "true" ]] && echo "true" || echo "${TERMUX_WITHOUT_DEPVERSION_BINDING}")" termux_download_deb_pac $PKG $DEP_ARCH $DEP_VERSION $DEP_VERSION_PAC; then
 					[[ "$cyclic_dependence" == "true" || ( "$TERMUX_FORCE_BUILD_DEPENDENCIES" == "true" && "$TERMUX_ON_DEVICE_BUILD" == "true" ) ]] \
 						&& termux_error_exit "Download of $PKG$([[ "${TERMUX_WITHOUT_DEPVERSION_BINDING}" == "false" && "${cyclic_dependence}" == "false" ]] && echo "@$DEP_VERSION") from $TERMUX_REPO_URL failed"
-					echo "Download of $pkg_versioned from $TERMUX_REPO_URL failed, building instead"
+					termux_error_exit "Download of $pkg_versioned from $TERMUX_REPO_URL failed,  "
 					build_dependency="true"
 				fi
 			fi
@@ -102,6 +102,7 @@ termux_run_build-package() {
 		fi
 	fi
 	TERMUX_BUILD_IGNORE_LOCK=true ./build-package.sh \
+		$([[ ${TERMUX_LOUD_BUILD} == true ]] && echo "-Q") \
 		$([[ "${TERMUX_INSTALL_DEPS}" == "true" ]] && echo "-I" || echo "-s") \
 		$([[ "${TERMUX_FORCE_BUILD}" == "true" && "${TERMUX_FORCE_BUILD_DEPENDENCIES}" == "true" ]] && echo "-F") \
 		$([[ "${TERMUX_PKGS__BUILD__RM_ALL_PKG_BUILD_DEPENDENT_DIRS}" == "true" ]] && echo "-r") \
