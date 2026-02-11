@@ -11,11 +11,16 @@ termux_step_setup_variables() {
 	: "${TERMUX_PKG_API_LEVEL:="24"}"
 	: "${TERMUX_CONTINUE_BUILD:="false"}"
 	: "${TERMUX_QUIET_BUILD:="false"}"
+	: "${TERMUX_LOUD_BUILD:="false"}"
 	: "${TERMUX_WITHOUT_DEPVERSION_BINDING:="false"}"
 	: "${TERMUX_SKIP_DEPCHECK:="false"}"
 	: "${TERMUX_GLOBAL_LIBRARY:="false"}"
 	: "${TERMUX_TOPDIR:="$HOME/.termux-build"}"
 	: "${TERMUX_PACMAN_PACKAGE_COMPRESSION:="xz"}"
+
+	if [[ ${TERMUX_LOUD_BUILD} == true ]]; then
+		export PS4='+$0 \[\e[32m\]${FUNCNAME[0]:-<global scope>}${FUNCNAME[*]:+()}:$LINENO\[\e[0m\] '; set -x;;
+	fi
 
 	if [ -z "${TERMUX_PACKAGE_FORMAT-}" ]; then
 		if [ "$TERMUX_ON_DEVICE_BUILD" = "true" ] && [ -n "${TERMUX_APP_PACKAGE_MANAGER-}" ]; then

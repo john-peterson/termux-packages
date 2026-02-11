@@ -578,7 +578,7 @@ while (( $# )); do
 		;;
 		-L) export TERMUX_GLOBAL_LIBRARY=true;;
 		-q) export TERMUX_QUIET_BUILD=true;;
-		-Q) export PS4='+$0 \[\e[32m\]${FUNCNAME[0]:-<global scope>}${FUNCNAME[*]:+()}:$LINENO\[\e[0m\] '; set -x;;
+		-Q) export TERMUX_LOUD_BUILD=true;;
 		-r) export TERMUX_PKGS__BUILD__RM_ALL_PKG_BUILD_DEPENDENT_DIRS=true;;
 		-w) export TERMUX_WITHOUT_DEPVERSION_BINDING=true;;
 		-s) export TERMUX_SKIP_DEPCHECK=true;;

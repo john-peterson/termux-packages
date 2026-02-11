@@ -102,6 +102,7 @@ termux_run_build-package() {
 		fi
 	fi
 	TERMUX_BUILD_IGNORE_LOCK=true ./build-package.sh \
+		$([[ ${TERMUX_LOUD_BUILD} == true ]] && echo "-Q") \
 		$([[ "${TERMUX_INSTALL_DEPS}" == "true" ]] && echo "-I" || echo "-s") \
 		$([[ "${TERMUX_FORCE_BUILD}" == "true" && "${TERMUX_FORCE_BUILD_DEPENDENCIES}" == "true" ]] && echo "-F") \
 		$([[ "${TERMUX_PKGS__BUILD__RM_ALL_PKG_BUILD_DEPENDENT_DIRS}" == "true" ]] && echo "-r") \
