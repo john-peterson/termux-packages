@@ -33,6 +33,7 @@ termux_download() {
 
 	local TMPFILE
 	local -a CURL_OPTIONS=(
+		-q
 		--fail               # Consider 4xx and 5xx responses as failures
 		--retry 5            # Retry up to 5 times on transient failures
 		--retry-connrefused  # Also retry on refused connections

@@ -12,12 +12,14 @@ _SNAPSHOT_COMMIT=a480458efb0662531287f0c75116c0e91fe235cb
 
 # The subshell leaving the value in the outer scope unchanged is the point here.
 # shellcheck disable=SC2031
-TERMUX_PKG_VERSION=(6.5.20240831
+TERMUX_PKG_VERSION=(
+# 6.5.20240831
+6.6.20260124+really6.5.20250830
                     9.31
                     "$(. "$TERMUX_SCRIPTDIR/x11-packages/kitty/build.sh"; echo "$TERMUX_PKG_VERSION")"
                     "$(. "$TERMUX_SCRIPTDIR/x11-packages/alacritty/build.sh"; echo "$TERMUX_PKG_VERSION")"
                     "$(. "$TERMUX_SCRIPTDIR/x11-packages/foot/build.sh"; echo "$TERMUX_PKG_VERSION")")
-TERMUX_PKG_REVISION=3
+# TERMUX_PKG_REVISION=3
 # shellcheck disable=SC2031
 TERMUX_PKG_SRCURL=("https://github.com/ThomasDickey/ncurses-snapshots/archive/${_SNAPSHOT_COMMIT}.tar.gz"
                    "https://dist.schmorp.de/rxvt-unicode/Attic/rxvt-unicode-${TERMUX_PKG_VERSION[1]}.tar.bz2"
