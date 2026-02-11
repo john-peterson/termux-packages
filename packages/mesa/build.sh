@@ -4,10 +4,15 @@ TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_LICENSE_FILE="docs/license.rst"
 TERMUX_PKG_MAINTAINER="@termux"
 TERMUX_PKG_VERSION="25.3.3"
-TERMUX_PKG_SRCURL=https://archive.mesa3d.org/mesa-${TERMUX_PKG_VERSION}.tar.xz
-TERMUX_PKG_SHA256=05328b3891c000e6a110a3e7321d8bfbb21631d132bf86bd3d4a8f45c535ef6b
+TERMUX_PKG_API_LEVEL=26
+# TERMUX_PKG_SRCURL=https://archive.mesa3d.org/mesa-${TERMUX_PKG_VERSION}.tar.xz
+# TERMUX_PKG_SHA256=05328b3891c000e6a110a3e7321d8bfbb21631d132bf86bd3d4a8f45c535ef6b
+# TERMUX_PKG_SRCURL=git+https://github.com/john-peterson/mesa
+# TERMUX_PKG_GIT_BRANCH=android
+TERMUX_PKG_SRCURL=git+https://gitlab.freedesktop.org/mesa/mesa
+TERMUX_PKG_GIT_BRANCH=main
 TERMUX_PKG_AUTO_UPDATE=true
-TERMUX_PKG_DEPENDS="libandroid-shmem, libc++, libdrm, libglvnd, libllvm (<< $TERMUX_LLVM_NEXT_MAJOR_VERSION), libwayland, libx11, libxext, libxfixes, libxshmfence, libxxf86vm, ncurses, vulkan-loader, zlib, zstd"
+TERMUX_PKG_DEPENDS="libandroid-spawn,libandroid-shmem, libc++, libdrm, libglvnd, libllvm (<< $TERMUX_LLVM_NEXT_MAJOR_VERSION), libwayland, libx11, libxext, libxfixes, libxshmfence, libxxf86vm, ncurses, vulkan-loader, zlib, zstd"
 TERMUX_PKG_SUGGESTS="mesa-dev"
 TERMUX_PKG_BUILD_DEPENDS="libclc, libwayland-protocols, libxrandr, llvm, llvm-tools, mlir, spirv-tools, xorgproto"
 TERMUX_PKG_BREAKS="osmesa, osmesa-demos"
@@ -17,20 +22,24 @@ TERMUX_PKG_REPLACES="libmesa, osmesa"
 # FIXME: Set `shared-llvm` to disabled if possible
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --cmake-prefix-path $TERMUX_PREFIX
+-Dplatform-sdk-version=$TERMUX_PKG_API_LEVEL
 -Dgbm=enabled
 -Dopengl=true
 -Degl=enabled
--Degl-native-platform=x11
+-Degl-native-platform=android
 -Dgles1=disabled
 -Dgles2=enabled
 -Dglx=dri
 -Dllvm=enabled
 -Dshared-llvm=enabled
--Dplatforms=x11,wayland
+-Dplatforms=x11,android
 -Dgallium-drivers=llvmpipe,panfrost,softpipe,virgl,zink
 -Dgallium-rusticl=true
 -Dglvnd=enabled
 -Dxmlconfig=disabled
+-Dandroid-libbacktrace=disabled
+-Dandroid-stub=true
+-Dbuild-tests=false
 "
 
 termux_step_post_get_source() {
