@@ -61,7 +61,7 @@ termux_replace_prefix() {
 					echo prefix found inside $f . this should not happen . add -f -C to ignore and replace
 					$TERMUX_FORCE_BUILD || exit
 				fi
-				replace_in_binary $f $old "$new"
+				replace_in_binary $old "$new" $f
 			fi
 		fi
 
@@ -72,9 +72,9 @@ termux_replace_prefix() {
 
 # by Johan hedin
 replace_in_binary() {
-local FILE="$1"
-local PATTERN="$2"
-local REPLACEMENT="$3"
+local PATTERN="$1"
+local REPLACEMENT="$2"
+local FILE="$3"
 
 # Find all unique strings in FILE that contain the pattern 
 STRINGS=$(strings ${FILE} | grep ${PATTERN} | sort -u -r)
@@ -92,27 +92,28 @@ for OLD_STRING in ${STRINGS} ; do
 
 	# Create null terminated ASCII HEX representations of the strings
 	OLD_STRING_HEX="$(echo -n ${OLD_STRING} | xxd -g 0 -u -ps -c 256)00"
+	# OLD_STRING_HEX="$(echo -n ${OLD_STRING} | xxd -g 0 -u -ps -c 256)"
 	NEW_STRING_HEX="$(echo -n ${NEW_STRING} | xxd -g 0 -u -ps -c 256)00"
+	# NEW_STRING_HEX="$(echo -n ${NEW_STRING} | xxd -g 0 -u -ps -c 256)"
 
-	if [ ${#NEW_STRING_HEX} -le ${#OLD_STRING_HEX} ] ; then
-		# Pad the replacement string with null terminations so the
-		# length matches the original string
-		while [ ${#NEW_STRING_HEX} -lt ${#OLD_STRING_HEX} ] ; do
-			NEW_STRING_HEX="${NEW_STRING_HEX}00"
-		done
-
-		# Now, replace every occurrence of OLD_STRING with NEW_STRING 
-		echo -n "Replacing ${OLD_STRING} with ${NEW_STRING}... "
-		hexdump -ve '1/1 "%.2X"' ${FILE} | \
-			sed "s/${OLD_STRING_HEX}/${NEW_STRING_HEX}/g" | \
-			xxd -r -p > ${FILE}.tmp
-					chmod --reference ${FILE} ${FILE}.tmp
-					mv ${FILE}.tmp ${FILE}
-					echo "Done!"
-				else
-					echo "New string '${NEW_STRING}' is longer than old" \
-						"string '${OLD_STRING}'. Skipping."
+	if [ ${#NEW_STRING_HEX} -gt ${#OLD_STRING_HEX} ] ; then
+		echo "New string '${NEW_STRING}' is longer than old string '${OLD_STRING}'. Skipping."
+		continue
 	fi
-done
+	# Pad the replacement string with null terminations so the
+	# length matches the original string
+	while [ ${#NEW_STRING_HEX} -lt ${#OLD_STRING_HEX} ] ; do
+		NEW_STRING_HEX="${NEW_STRING_HEX}00"
+	done
+
+	# Now, replace every occurrence of OLD_STRING with NEW_STRING 
+	echo -n "Replacing ${OLD_STRING} with ${NEW_STRING}... "
+	hexdump -ve '1/1 "%.2X"' ${FILE} | \
+		sed "s/${OLD_STRING_HEX}/${NEW_STRING_HEX}/g" | \
+		xxd -r -p > ${FILE}.tmp
+		chmod --reference ${FILE} ${FILE}.tmp
+		mv ${FILE}.tmp ${FILE}
+		echo "Done!"
+	done
 }
 

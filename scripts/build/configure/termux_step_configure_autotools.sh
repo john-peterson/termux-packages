@@ -99,6 +99,7 @@ termux_step_configure_autotools() {
 	AVOID_GNULIB+=" gl_cv_header_working_fcntl_h=yes"
 	AVOID_GNULIB+=" gl_cv_C_locale_sans_EILSEQ=yes"
 
+	# read -p "confirm --prefix=$TERMUX_PREFIX_BASE"
 	# NOTE: We do not want to quote AVOID_GNULIB as we want word expansion.
 	# shellcheck disable=SC2086
 	env $AVOID_GNULIB "$TERMUX_PKG_SRCDIR/configure" \

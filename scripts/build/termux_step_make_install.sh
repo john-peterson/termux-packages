@@ -2,7 +2,16 @@
 termux_step_make_install() {
 	[ "$TERMUX_PKG_METAPACKAGE" = "true" ] && return
 	if test -f build.ninja; then
-		ninja -j $TERMUX_PKG_MAKE_PROCESSES $TERMUX_PKG_MAKE_INSTALL_TARGET 
+		if $TERMUX_SAFE_BUILD; then
+			# sed -i --debug s,$TERMUX_PREFIX_INSTALL,$TERMUX_PKG_MASSAGEDIR_BASE, $TERMUX_PKG_BUILDDIR/meson-info/intro-installed.json
+			# replace_in_binary $TERMUX_PREFIX_INSTALL $TERMUX_PKG_MASSAGEDIR_BASE $TERMUX_PKG_BUILDDIR/meson-private/install.dat
+			$TERMUX_SCRIPTDIR/scripts/meson_replace.py prefix $TERMUX_PKG_MASSAGEDIR_BASE $TERMUX_PKG_BUILDDIR/meson-private/install.dat
+			# cat $TERMUX_PKG_BUILDDIR/meson-info/intro-installed.json
+			# echo 
+			strings  $TERMUX_PKG_BUILDDIR/meson-private/install.dat | ack prefix -A
+			read -p "confirm  path"
+		fi
+		ninja -j $TERMUX_PKG_MAKE_PROCESSES $TERMUX_PKG_NINJA_INSTALL_TARGET 
 	elif test -f setup.py || test -f pyproject.toml || test -f setup.cfg; then
 		pip install --no-deps . --prefix $TERMUX_PREFIX_BASE
 	elif ls ./*.cabal &>/dev/null; then

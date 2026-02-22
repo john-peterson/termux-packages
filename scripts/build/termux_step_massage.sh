@@ -353,7 +353,9 @@ termux_step_massage() {
 	fi
 
 	if $TERMUX_SAFE_BUILD; then
+		if test -f $TERMUX_PKG_BUILDDIR/Cargo.toml; then
 		termux_replace_prefix $TERMUX_PREFIX_INSTALL "$TERMUX_PREFIX_BASE"
+		fi
 	fi
 
 	if $TERMUX_PKG_PROOT; then

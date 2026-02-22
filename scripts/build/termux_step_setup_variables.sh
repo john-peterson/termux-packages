@@ -10,6 +10,7 @@ termux_step_setup_variables() {
 	: "${TERMUX_PKG_API_LEVEL:="24"}"
 	: "${TERMUX_SAFE_BUILD:="false"}"
 	: "${TERMUX_PKG_MAKE_INSTALL_TARGET:="install"}"
+	: "${TERMUX_PKG_NINJA_INSTALL_TARGET:="install"}"
 	: "${TERMUX_FAST_BUILD:="false"}"
 	: "${TERMUX_CONTINUE_BUILD:="false"}"
 	: "${TERMUX_CONTINUE_MASSAGE:="false"}"
@@ -83,6 +84,7 @@ termux_step_setup_variables() {
 	TERMUX_PKG_MASSAGEDIR_PAK="$TERMUX_PKG_MASSAGEDIR"
 
 	: "${TERMUX_PKG_CARGO_INSTALL_TARGET:="$TERMUX_PREFIX_INSTALL"}"
+	: "${TERMUX_PKG_MESON_INSTALL_TARGET:="$TERMUX_PREFIX_INSTALL"}"
 
 	if $TERMUX_PKG_PROOT; then
 		TERMUX_SAFE_BUILD=true
@@ -114,21 +116,28 @@ termux_step_setup_variables() {
 
 	if $TERMUX_SAFE_BUILD; then
 		# this is needed for cargo or other that don't support safe build 
-		TERMUX_PREFIX_INSTALL=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX_BASE
+		# TERMUX_PREFIX_INSTALL=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX_BASE
 		# TERMUX_PREFIX_INSTALL=$TERMUX_PKG_MASSAGEDIR
-		TERMUX_PREFIX_INSTALL_CLASSICAL=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX_BASE_CLASSICAL
+		# TERMUX_PREFIX_INSTALL_CLASSICAL=$TERMUX_PKG_MASSAGEDIR$TERMUX_PREFIX_BASE_CLASSICAL
 		# TERMUX_PKG_MAKE_INSTALL_TARGET="install DESTDIR=$TERMUX_PREFIX_INSTALL"
 		TERMUX_PKG_MAKE_INSTALL_TARGET="install DESTDIR=$TERMUX_PKG_MASSAGEDIR"
 		TERMUX_PKG_CARGO_INSTALL_TARGET="$TERMUX_PKG_MASSAGEDIR_BASE"
+		# TERMUX_PKG_MESON_INSTALL_TARGET="$TERMUX_PKG_MASSAGEDIR_BASE"
 		# TERMUX_PREFIX=$TERMUX_PREFIX_INSTALL
 		# echo "safe prefix $TERMUX_PREFIX -> $TERMUX_PREFIX_INSTALL"
+		echo TERMUX_PREFIX=$TERMUX_PREFIX
+		echo TERMUX_PREFIX_INSTALL=$TERMUX_PREFIX_INSTALL
+		echo TERMUX_PKG_MESON_INSTALL_TARGET=$TERMUX_PKG_MESON_INSTALL_TARGET
+		# read -p "confirm paths"
 	fi
 
 	# exit
 
 	if [ "$TERMUX_ON_DEVICE_BUILD" = "true" ]; then
 		# eight threads is ridiculous for four gig ram that is mostly tied up already 
-		TERMUX_PKG_MAKE_PROCESSES=$(($(nproc)/2))
+		# TERMUX_PKG_MAKE_PROCESSES=$(($(nproc)/2))
+		# even that crashed has to be safe better than sorry 
+		TERMUX_PKG_MAKE_PROCESSES=1
 		# For on-device builds cross-compiling is not supported so we can
 		# store information about built packages under $TERMUX_TOPDIR.
 		TERMUX_BUILT_PACKAGES_DIRECTORY="$TERMUX_TOPDIR/.built-packages"
@@ -272,6 +281,10 @@ termux_step_setup_variables() {
 	TERMUX_PKG_MESON_NATIVE=false
 	TERMUX_PKG_CMAKE_CROSSCOMPILING=true
 	TERMUX_PKG_NAME=$TERMUX_PKG_NAME_DEPENDENCY
+
+	if $TERMUX_ON_DEVICE_BUILD; then
+		sed -i '1 s,usr/bin/env,/bin/env,' $TERMUX_COMMON_CACHEDIR/meson-1*/meson.py || true
+	fi
 
 	unset CFLAGS CPPFLAGS LDFLAGS CXXFLAGS
 	unset TERMUX_MESON_ENABLE_SOVERSION # setenv to enable SOVERSION suffix for shared libs built with Meson

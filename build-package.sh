@@ -701,11 +701,11 @@ for ((i=0; i<${#PACKAGE_LIST[@]}; i++)); do
 			termux_step_pre_configure
 		fi
 
-		# this is a transitional clause pending replacement with safe specific  prefix every where 
-		if $TERMUX_SAFE_BUILD; then
-			echo "safe prefix $TERMUX_PREFIX -> $TERMUX_PREFIX_INSTALL"
-			TERMUX_PREFIX=$TERMUX_PREFIX_INSTALL
-			TERMUX_PREFIX_CLASSICAL=$TERMUX_PREFIX_INSTALL_CLASSICAL
+		# this is for all package scripts
+		if $TERMUX_PKG_PROOT; then
+			echo 'set package  prefix $TERMUX_PREFIX -> $TERMUX_PREFIX_BASE'
+			TERMUX_PREFIX=$TERMUX_PREFIX_BASE
+			TERMUX_PREFIX_CLASSICAL=$TERMUX_PREFIX_BASE
 		fi
 
 		# Even on continued build we might need to setup paths

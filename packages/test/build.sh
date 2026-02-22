@@ -4,8 +4,10 @@ TERMUX_PKG_LICENSE="WTFPL"
 TERMUX_PKG_NO_ELF_CLEANER=true
 
 termux_step_post_get_source() {
-cp  $TERMUX_PKG_BUILDER_DIR/* $TERMUX_PKG_SRCDIR/ 
-cp  $TERMUX_PKG_BUILDER_DIR/Cargo* $TERMUX_PKG_BUILDDIR/
+cp  $TERMUX_PKG_BUILDER_DIR/*.c $TERMUX_PKG_SRCDIR/ 
+# cp  $TERMUX_PKG_BUILDER_DIR/Cargo* $TERMUX_PKG_BUILDDIR/
+# cp  $TERMUX_PKG_BUILDER_DIR/meson* $TERMUX_PKG_BUILDDIR/
+cp  $TERMUX_PKG_BUILDER_DIR/meson* $TERMUX_PKG_SRCDIR/
 }
 
 termux_step_pre_configure() {
@@ -42,9 +44,9 @@ set -e
 
 termux_step_post_configure() {
 	pwd
-	mkdir bin etc -vp
-echo prefix=$TERMUX_PREFIX_INSTALL | tee etc/a
-touch bin/b
+	# mkdir bin etc -vp
+	# echo prefix=$TERMUX_PREFIX_INSTALL | tee etc/a
+	# touch bin/b
 
 # mkdir man
 # touch man/c
@@ -62,10 +64,10 @@ tree $TERMUX_PKG_MASSAGEDIR
 	# exit
 	# mkdir -p $TERMUX_PREFIX_INSTALL
 	# mkdir -p $TERMUX_PKG_MASSAGEDIR_PAK
-	mkdir -p $TERMUX_PKG_MASSAGEDIR_BASE
 
 	# install results 
-	cp $TERMUX_PKG_BUILDDIR/{bin,etc} $TERMUX_PKG_MASSAGEDIR_BASE/ -r 
+	# mkdir -p $TERMUX_PKG_MASSAGEDIR_BASE
+	# cp $TERMUX_PKG_BUILDDIR/{bin,etc} $TERMUX_PKG_MASSAGEDIR_BASE/ -r 
 	# cp $TERMUX_PKG_BUILDDIR/* $TERMUX_PREFIX_INSTALL/ -rv
 # install -Dm700 -t $TERMUX_PREFIX/ $TERMUX_PKG_SRCDIR/a
 	# cp $TERMUX_PKG_BUILDDIR/*android/release/test $TERMUX_PKG_MASSAGEDIR_BASE/bin/ 
@@ -84,6 +86,7 @@ termux_step_post_massage() {
 	# env | sort | ack ANDROID
 	# env | sort | ack CFLAG
 	(echo CC=$CC)
-	bin/test
+	# bin/test
+	bin/test0
 	set -e
 }
