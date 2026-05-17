@@ -524,6 +524,7 @@ _show_usage() {
 	echo "  -F Force build even if package and its dependencies have already been built."
 	[[ "$TERMUX_ON_DEVICE_BUILD" = "false" ]] && echo "  -i Download and extract dependencies instead of building them."
 	echo "  -I Download and extract dependencies instead of building them, keep existing $TERMUX_BASE_DIR files."
+	echo "  -j concurrent make jobs  [ use 1 on device to prevent crash   ] "
 	echo "  -L The package and its dependencies will be based on the same library."
 	echo "  -q Quiet build."
 	echo "  -Q Loud build -- set -x debug output and function tracing."
@@ -583,6 +584,13 @@ while (( $# )); do
 		-I)
 			export TERMUX_INSTALL_DEPS=true
 			export TERMUX_PKGS__BUILD__RM_ALL_PKGS_BUILT_MARKER_AND_INSTALL_FILES=false
+		;;
+		-j)
+			if [[ -z "${2-}" ]]; then
+				termux_error_exit "./build-package.sh: option '-j' requires an argument"
+			fi
+			shift 1
+			TERMUX_PKG_MAKE_PROCESSES=$1
 		;;
 		-L) export TERMUX_GLOBAL_LIBRARY=true;;
 		-q) export TERMUX_QUIET_BUILD=true;;
