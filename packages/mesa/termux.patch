@@ -1,0 +1,11 @@
+--- src/include/EGL/eglplatform.h	2026-05-29 13:37:43.842824249 -0300
++++ eglplatform.h	2026-05-29 13:37:06.694497778 -0300
+@@ -94,7 +94,7 @@
+ typedef struct gbm_bo      *EGLNativePixmapType;
+ typedef void               *EGLNativeWindowType;
+ 
+-#elif defined(__ANDROID__) || defined(ANDROID)
++#elif (defined(__ANDROID__) || defined(ANDROID)) && !defined(__TERMUX__)
+ 
+ struct ANativeWindow;
+ struct egl_native_pixmap_t;

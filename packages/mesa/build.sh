@@ -7,8 +7,12 @@ TERMUX_PKG_VERSION="26.0.6"
 TERMUX_PKG_REVISION=1
 TERMUX_PKG_SRCURL=https://archive.mesa3d.org/mesa-${TERMUX_PKG_VERSION}.tar.xz
 TERMUX_PKG_SHA256=1d3c3b8a8363b8cc354175bb4a684ad8b035211cc1d6fa17aeb9b9623c513f89
-TERMUX_PKG_AUTO_UPDATE=true
-TERMUX_PKG_DEPENDS="libandroid-shmem, libc++, libdrm, libglvnd, libllvm (<< $TERMUX_LLVM_NEXT_MAJOR_VERSION), libwayland, libx11, libxext, libxfixes, libxshmfence, libxxf86vm, ncurses, vulkan-loader, zlib, zstd"
+# TERMUX_PKG_VERSION="25.02"
+# TERMUX_PKG_SRCURL=git+https://github.com/john-peterson/mesa
+# TERMUX_PKG_GIT_BRANCH=log/better
+# TERMUX_PKG_AUTO_UPDATE=true
+# TERMUX_PKG_DEPENDS="libandroid-shmem, libc++, libdrm, libglvnd, libllvm (<< $TERMUX_LLVM_NEXT_MAJOR_VERSION), libwayland, libx11, libxext, libxfixes, libxshmfence, libxxf86vm, ncurses, vulkan-loader, zlib, zstd"
+TERMUX_PKG_DEPENDS="libandroid-shmem, libc++, libdrm, libxext, libxfixes, libxshmfence, libxxf86vm, ncurses, zlib, zstd"
 TERMUX_PKG_SUGGESTS="mesa-dev"
 TERMUX_PKG_BUILD_DEPENDS="libclc, libwayland-protocols, libxrandr, llvm, llvm-tools, mlir, spirv-tools, xorgproto"
 TERMUX_PKG_BREAKS="osmesa, osmesa-demos"
@@ -21,18 +25,27 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 -Dgbm=enabled
 -Dopengl=true
 -Degl=enabled
--Degl-native-platform=x11
+-Dglx=dri
+-Degl-native-platform=surfaceless
+-Dllvm=disabled
 -Dgles1=disabled
 -Dgles2=enabled
--Dglx=dri
--Dllvm=enabled
--Dshared-llvm=enabled
--Dplatforms=x11,wayland
--Dgallium-drivers=llvmpipe,softpipe,virgl,zink
--Dgallium-rusticl=true
--Dglvnd=enabled
+-Dplatforms=x11
+-Dgallium-drivers=softpipe
+-Dvulkan-drivers=
+-Dglvnd=disabled
 -Dxmlconfig=disabled
 "
+# -Db_ndebug=true
+# -Dgallium-rusticl=true
+# -Dplatforms=x11,wayland
+# -Dgallium-drivers=llvmpipe,softpipe,virgl,zink
+# -Dglx=dri
+# -Dglx=disabled
+# -Dllvm=enabled
+# -Dshared-llvm=enabled
+
+set +e
 
 termux_step_post_get_source() {
 	# Do not use meson wrap projects
@@ -40,18 +53,19 @@ termux_step_post_get_source() {
 }
 
 termux_step_pre_configure() {
+	read -p " did all patches apply or  fail "
 	if [ "$TERMUX_PKG_API_LEVEL" -lt 29 ]; then
 		# ELF TLS is supported starting with API level 29.
 		patch --silent -p1 < "$TERMUX_PKG_BUILDER_DIR/0011-lld-undefined-version.diff"
 	fi
 
 	termux_setup_cmake
-	termux_setup_rust
+	# termux_setup_rust
 
 	: "${CARGO_HOME:=${HOME}/.cargo}"
 	export CARGO_HOME
 
-	cargo install --force --locked bindgen-cli
+	# cargo install --force --locked bindgen-cli
 	if [[ "${TERMUX_ON_DEVICE_BUILD}" == "false" ]]; then
 		export BINDGEN_EXTRA_CLANG_ARGS="--sysroot ${TERMUX_STANDALONE_TOOLCHAIN}/sysroot"
 		case "${TERMUX_ARCH}" in
@@ -61,6 +75,7 @@ termux_step_pre_configure() {
 	fi
 
 	CPPFLAGS+=" -D__USE_GNU"
+	CPPFLAGS+=" -DMESA_DEBUG=1"
 	LDFLAGS+=" -landroid-shmem"
 
 	_WRAPPER_BIN=$TERMUX_PKG_BUILDDIR/_wrapper/bin
@@ -70,7 +85,7 @@ termux_step_pre_configure() {
 			$TERMUX_PKG_BUILDER_DIR/cmake-wrapper.in \
 			> $_WRAPPER_BIN/cmake
 		chmod 0700 $_WRAPPER_BIN/cmake
-		termux_setup_wayland_cross_pkg_config_wrapper
+		# termux_setup_wayland_cross_pkg_config_wrapper
 	fi
 	export LLVM_CONFIG="${TERMUX_PREFIX}/bin/llvm-config"
 	export PATH="${_WRAPPER_BIN}:${CARGO_HOME}/bin:${PATH}"
@@ -78,9 +93,9 @@ termux_step_pre_configure() {
 	local _vk_drivers="swrast"
 	if [ $TERMUX_ARCH = "arm" ] || [ $TERMUX_ARCH = "aarch64" ]; then
 		_vk_drivers+=",freedreno"
-		TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" -Dfreedreno-kmds=msm,kgsl"
+		# TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" -Dfreedreno-kmds=msm,kgsl"
 	fi
-	TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" -Dvulkan-drivers=$_vk_drivers"
+	# TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" -Dvulkan-drivers=$_vk_drivers"
 }
 
 termux_step_post_configure() {

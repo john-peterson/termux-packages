@@ -1,0 +1,213 @@
+From 18c48bae67542a35a1d1c1dfb6565fcf8c958a9a Mon Sep 17 00:00:00 2001
+From: John Peterson <jpeterson57@gmail.com>
+Date: Wed, 25 Feb 2026 04:18:54 +1100
+Subject: [PATCH] better log
+
+---
+ src/egl/drivers/dri2/egl_dri2.c |  2 +-
+ src/egl/main/egllog.c           | 19 ++++++++++++++++-
+ src/egl/main/egllog.h           | 16 +++++++++++++-
+ src/util/u_debug.c              | 37 ++++++++++++++++++++++++++++++++-
+ src/util/u_debug.h              | 33 +++++++++++++++++++++++++----
+ 5 files changed, 99 insertions(+), 8 deletions(-)
+
+diff --git a/src/egl/drivers/dri2/egl_dri2.c b/src/egl/drivers/dri2/egl_dri2.c
+index 89c31fb08b..db1c0f3dfa 100644
+--- a/src/egl/drivers/dri2/egl_dri2.c
++++ b/src/egl/drivers/dri2/egl_dri2.c
+@@ -875,7 +875,7 @@ dri2_initialize(_EGLDisplay *disp)
+    if (!dri2_dpy)
+       return EGL_FALSE;
+ 
+-   loader_set_logger(_eglLog);
++   loader_set_logger(_eglLog0);
+ 
+    switch (disp->Platform) {
+    case _EGL_PLATFORM_SURFACELESS:
+diff --git a/src/egl/main/egllog.c b/src/egl/main/egllog.c
+index 4fdce4125f..e54ab0a97f 100644
+--- a/src/egl/main/egllog.c
++++ b/src/egl/main/egllog.c
+@@ -127,12 +127,29 @@ _eglGetLogLevel(void)
+    return logging.level;
+ }
+ 
++void
++_eglLog2(EGLint level, const char *file,   int line, const char *func,  const char *fmtStr, ...)
++{
++   va_list args;
++   char msg[MAXSTRING];
++   char msg2[MAXSTRING];
++   int ret;
++   if (!logging.initialized)
++      _eglInitLogger();
++   va_start(args, fmtStr);
++   ret = vsnprintf(msg, MAXSTRING, fmtStr, args);
++   va_end(args);
++   ret = snprintf(msg2, MAXSTRING,
++ "%s:%i:%s %s", file, line, func, msg);
++   _eglDefaultLogger(level, msg2);
++}
++
+ /**
+  * Log a message with message logger.
+  * \param level one of _EGL_FATAL, _EGL_WARNING, _EGL_INFO, _EGL_DEBUG.
+  */
+ void
+-_eglLog(EGLint level, const char *fmtStr, ...)
++_eglLog0(EGLint level, const char *fmtStr, ...)
+ {
+    va_list args;
+    char msg[MAXSTRING];
+diff --git a/src/egl/main/egllog.h b/src/egl/main/egllog.h
+index 09633124ed..7f2d099604 100644
+--- a/src/egl/main/egllog.h
++++ b/src/egl/main/egllog.h
+@@ -44,7 +44,21 @@ extern EGLint
+ _eglGetLogLevel(void);
+ 
+ extern void
+-_eglLog(EGLint level, const char *fmtStr, ...);
++_eglLog2(EGLint level, const char *file,   int line, const char *func,  const char *fmtStr, ...);
++
++extern void
++_eglLog0(EGLint level, const char *fmtStr, ...);
++
++# define _eglLog(level, ...)     \
++    _eglLog2(level,               \
++            __FILE__,             \
++            __LINE__,             \
++            __FUNCTION__,         \
++            __VA_ARGS__)
++
++# define egllog(...)             \
++    _eglLog(_EGL_DEBUG,               \
++                      __VA_ARGS__)
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/src/util/u_debug.c b/src/util/u_debug.c
+index 96f7ccaaeb..304167d8a4 100644
+--- a/src/util/u_debug.c
++++ b/src/util/u_debug.c
+@@ -42,9 +42,44 @@
+ #include <stdlib.h>
+ #endif
+ 
++void
++_debug_printf2(
++      const char * file,
++			int line,
++      const char * func,
++      const char *format, ...)
++{
++   va_list args;
++   va_start(args, format);
++	 _debug_vprintf2(
++			file,
++			line,
++			func,
++			format,
++			args);
++   va_end(args);
++}
++
++#define MAXSTRING          4096
++void
++_debug_vprintf2(
++         const char *file, int line, const char *func,
++      const char *format, va_list args)
++{
++   /* const int MAXSTRING = 4096; */
++   char buf[MAXSTRING] = {'\0'};
++   char buf2[MAXSTRING] = {'\0'};
++   int ret;
++   /* va_start(args, format); */
++   ret = vsnprintf(buf, sizeof(buf), format, args);
++   /* va_end(args); */
++   ret = snprintf(buf2, MAXSTRING,
++ "%s:%i:%s %s", file, line, func, buf);
++   os_log_message(buf2);
++}
+ 
+ void
+-_debug_vprintf(const char *format, va_list ap)
++_debug_vprintf0(const char *format, va_list ap)
+ {
+    static char buf[4096] = {'\0'};
+ #if DETECT_OS_WINDOWS
+diff --git a/src/util/u_debug.h b/src/util/u_debug.h
+index 9608e97ba6..e2a294f4b4 100644
+--- a/src/util/u_debug.h
++++ b/src/util/u_debug.h
+@@ -51,6 +51,7 @@
+ #include "util/detect_os.h"
+ #include "util/macros.h"
+ 
++
+ #if DETECT_OS_HAIKU
+ /* Haiku provides debug_printf in libroot with OS.h */
+ #include <OS.h>
+@@ -104,15 +105,15 @@ struct util_debug_callback
+ 
+ #define _util_printf_format(fmt, list) PRINTFLIKE(fmt, list)
+ 
+-void _debug_vprintf(const char *format, va_list ap);
++void _debug_vprintf0(const char *format, va_list ap);
+ 
+ 
+ static inline void
+-_debug_printf(const char *format, ...)
++_debug_printf0(const char *format, ...)
+ {
+    va_list ap;
+    va_start(ap, format);
+-   _debug_vprintf(format, ap);
++   _debug_vprintf0(format, ap);
+    va_end(ap);
+ }
+ 
+@@ -126,7 +127,32 @@ _debug_printf(const char *format, ...)
+  * - avoid outputing large strings (512 bytes is the current maximum length
+  * that is guaranteed to be printed in all platforms)
+  */
++
+ #if !DETECT_OS_HAIKU
++void
++_debug_vprintf2( const char *file,   int line, const char *func,  const char *format, va_list ap);
++
++void
++_debug_printf2(
++      const char * file,
++			int line,
++      const char * func,
++      const char *format, ...);
++
++# define _debug_vprintf(fmt, ap)     \
++    _debug_vprintf2(               \
++          __FILE__,             \
++          __LINE__,             \
++          __FUNCTION__,         \
++          fmt, ap)
++
++# define _debug_printf(...)         \
++    _debug_printf2(               \
++          __FILE__,             \
++          __LINE__,             \
++          __FUNCTION__,         \
++          __VA_ARGS__)
++
+ static inline void
+ debug_printf(const char *format, ...) _util_printf_format(1,2);
+ 
+@@ -144,7 +170,6 @@ debug_printf(const char *format, ...)
+ }
+ #endif
+ 
+-
+ /*
+  * ... isn't portable so we need to pass arguments in parentheses.
+  *
+-- 
+2.53.0
+
