@@ -1,0 +1,152 @@
+From 1ee71d05f41d84add91b5af30d9ed2dc535fe79b Mon Sep 17 00:00:00 2001
+From: John Peterson <jpeterson57@gmail.com>
+Date: Wed, 25 Feb 2026 04:18:54 +1100
+Subject: [PATCH] log more
+
+---
+ src/egl/drivers/dri2/platform_x11.c |  1 +
+ src/egl/main/eglapi.c               |  4 ++++
+ src/egl/main/egldisplay.c           | 11 ++++++++++-
+ src/util/os_misc.c                  |  1 +
+ src/util/u_debug.c                  |  1 +
+ 5 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/src/egl/drivers/dri2/platform_x11.c b/src/egl/drivers/dri2/platform_x11.c
+index 96c38aac..300c6510 100644
+--- a/src/egl/drivers/dri2/platform_x11.c
++++ b/src/egl/drivers/dri2/platform_x11.c
+@@ -1095,6 +1095,7 @@ disconnect:
+    if (disp->PlatformDisplay == NULL)
+       xcb_disconnect(dri2_dpy->conn);
+ 
++   egllog(msg);
+    return _eglError(EGL_BAD_ALLOC, msg);
+ }
+ 
+diff --git a/src/egl/main/eglapi.c b/src/egl/main/eglapi.c
+index fb5a8b6f..880110d5 100644
+--- a/src/egl/main/eglapi.c
++++ b/src/egl/main/eglapi.c
+@@ -423,6 +423,8 @@ static EGLDisplay
+ _eglGetPlatformDisplayCommon(EGLenum platform, void *native_display,
+                              const EGLAttrib *attrib_list)
+ {
++   egllog("");
++   debug_checkpoint_full();
+    _EGLDisplay *disp;
+ 
+    switch (platform) {
+@@ -664,6 +666,7 @@ _eglComputeVersion(_EGLDisplay *disp)
+ PUBLIC EGLBoolean EGLAPIENTRY
+ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
+ {
++   egllog("");
+    _EGLDisplay *disp = _eglLockDisplay(dpy);
+ 
+    util_cpu_trace_init();
+@@ -699,6 +702,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
+             RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
+          else {
+             bool success = false;
++            egllog("unset GALLIUM_DRIVER to use zink");
+             if (!disp->Options.Zink && !os_get_option("GALLIUM_DRIVER")) {
+                disp->Options.Zink = EGL_TRUE;
+                success = _eglDriver.Initialize(disp);
+diff --git a/src/egl/main/egldisplay.c b/src/egl/main/egldisplay.c
+index a75855c0..b3cb8c0b 100644
+--- a/src/egl/main/egldisplay.c
++++ b/src/egl/main/egldisplay.c
+@@ -45,6 +45,7 @@
+ #include "util/os_file.h"
+ #include "util/os_misc.h"
+ #include "util/u_atomic.h"
++#include "util/u_debug.h"
+ 
+ #include "eglcontext.h"
+ #include "eglcurrent.h"
+@@ -92,6 +93,7 @@ static const struct {
+ static _EGLPlatformType
+ _eglGetNativePlatformFromEnv(void)
+ {
++   egllog("");
+    _EGLPlatformType plat = _EGL_INVALID_PLATFORM;
+    const char *plat_name;
+    EGLint i;
+@@ -99,7 +101,8 @@ _eglGetNativePlatformFromEnv(void)
+    static_assert(ARRAY_SIZE(egl_platforms) == _EGL_NUM_PLATFORMS,
+                  "Missing platform");
+ 
+-   plat_name = os_get_option("EGL_PLATFORM");
++   plat_name = debug_get_option("EGL_PLATFORM", 0);
++   // egllog("EGL_PLATFORM = %s", plat_name);
+    /* try deprecated env variable */
+    if (!plat_name || !plat_name[0])
+       plat_name = os_get_option("EGL_DISPLAY");
+@@ -161,6 +164,7 @@ _eglNativePlatformDetectNativeDisplay(void *nativeDisplay)
+ _EGLPlatformType
+ _eglGetNativePlatform(void *nativeDisplay)
+ {
++   egllog("");
+    _EGLPlatformType detected_platform = _eglGetNativePlatformFromEnv();
+    const char *detection_method = "environment";
+ 
+@@ -173,6 +177,7 @@ _eglGetNativePlatform(void *nativeDisplay)
+       detected_platform = _EGL_NATIVE_PLATFORM;
+       detection_method = "build-time configuration";
+    }
++   egllog("detection_method = %s", detection_method);
+ 
+    _eglLog(_EGL_DEBUG, "Native platform type: %s (%s)",
+            egl_platforms[detected_platform].name, detection_method);
+@@ -522,6 +527,7 @@ _EGLDisplay *
+ _eglGetXcbDisplay(xcb_connection_t *native_display,
+                   const EGLAttrib *attrib_list)
+ {
++   egllog("");
+    _EGLDisplay *dpy;
+    _EGLDevice *dev = NULL;
+ 
+@@ -532,6 +538,7 @@ _eglGetXcbDisplay(xcb_connection_t *native_display,
+       for (int i = 0; attrib_list[i] != EGL_NONE; i += 2) {
+          EGLAttrib attrib = attrib_list[i];
+          EGLAttrib value = attrib_list[i + 1];
++         egllog("attr =    %s, val = %s", attrib, value);
+ 
+          switch (attrib) {
+          case EGL_DEVICE_EXT:
+@@ -642,6 +649,8 @@ _eglGetWaylandDisplay(struct wl_display *native_display,
+ _EGLDisplay *
+ _eglGetSurfacelessDisplay(void *native_display, const EGLAttrib *attrib_list)
+ {
++   // debug_checkpoint_full();
++   egllog("");
+    _EGLDisplay *dpy;
+    _EGLDevice *dev = NULL;
+ 
+diff --git a/src/util/os_misc.c b/src/util/os_misc.c
+index 014a93fe..650d8565 100644
+--- a/src/util/os_misc.c
++++ b/src/util/os_misc.c
+@@ -238,6 +238,7 @@ os_get_option_internal(const char *name, bool use_secure_getenv)
+       opt = os_get_android_option(name);
+    }
+ #endif
++   // debug_printf("%s: %s = %s\n", __func__, name, opt ? opt : "(null)");
+    return opt;
+ }
+ 
+diff --git a/src/util/u_debug.c b/src/util/u_debug.c
+index 304167d8..51fa7cee 100644
+--- a/src/util/u_debug.c
++++ b/src/util/u_debug.c
+@@ -185,6 +185,7 @@ debug_get_option_should_print(void)
+ 
+    /* We do not print value of GALLIUM_PRINT_OPTIONS intentionally. */
+    return value;
++   // return false;
+ }
+ 
+ 
+-- 
+2.53.0
+

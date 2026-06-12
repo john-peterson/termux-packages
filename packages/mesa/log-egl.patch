@@ -1,0 +1,13 @@
+--- src/src/egl/main/egllog.c	2026-06-12 04:51:19.889136038 -0300
++++ egllog.c	2026-06-12 05:20:00.796948537 -0300
+@@ -90,9 +90,8 @@
+       [_EGL_DEBUG] = ANDROID_LOG_DEBUG,
+    };
+    LOG_PRI(egl2alog[level], LOG_TAG, "%s", msg);
+-#else
+-   fprintf(stderr, "libEGL %s: %s\n", level_strings[level], msg);
+ #endif /* HAVE_ANDROID_PLATFORM */
++   fprintf(stderr, "libEGL %s: %s\n", level_strings[level], msg);
+ }
+ 
+ /**

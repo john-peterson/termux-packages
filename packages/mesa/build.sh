@@ -18,6 +18,7 @@ TERMUX_PKG_BUILD_DEPENDS="libclc, libwayland-protocols, libxrandr, llvm, llvm-to
 TERMUX_PKG_BREAKS="osmesa, osmesa-demos"
 TERMUX_PKG_CONFLICTS="libmesa, ndk-sysroot (<= 25b), osmesa"
 TERMUX_PKG_REPLACES="libmesa, osmesa"
+TERMUX_PKG_API_LEVEL=26
 
 # FIXME: Set `shared-llvm` to disabled if possible
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
@@ -30,12 +31,16 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 -Dllvm=disabled
 -Dgles1=disabled
 -Dgles2=enabled
--Dplatforms=x11
+-Dplatforms=x11,android
+-D android-stub=true
+-Dplatform-sdk-version=$TERMUX_PKG_API_LEVEL
 -Dgallium-drivers=softpipe
 -Dvulkan-drivers=
 -Dglvnd=disabled
 -Dxmlconfig=disabled
 "
+# -Degl-native-platform=android
+# -D build-tests=true
 # -Db_ndebug=true
 # -Dgallium-rusticl=true
 # -Dplatforms=x11,wayland
@@ -122,9 +127,20 @@ termux_step_post_make_install() {
 	done
 
 	# Create symlinks
-	ln -sf libEGL_mesa.so ${TERMUX_PREFIX}/lib/libEGL_mesa.so.0
-	ln -sf libGLX_mesa.so ${TERMUX_PREFIX}/lib/libGLX_mesa.so.0
-	ln -sf libRusticlOpenCL.so ${TERMUX_PREFIX}/lib/libRusticlOpenCL.so.1
+	ln -sf libEGL.so ${TERMUX_PREFIX}/lib/libEGL.so.1
+	# ln -sf libEGL_mesa.so ${TERMUX_PREFIX}/lib/libEGL_mesa.so.0
+	# ln -sf libGLX_mesa.so ${TERMUX_PREFIX}/lib/libGLX_mesa.so.0
+	# ln -sf libRusticlOpenCL.so ${TERMUX_PREFIX}/lib/libRusticlOpenCL.so.1
+	
+	# install test
+	path=$TERMUX_PKG_BUILDDIR/src/util/tests/
+	target=$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX/bin
+	mkdir $target
+	for f in $(find $path -type f -executable); do
+		# echo $f
+		cp $f $target/
+	done
+	# read -p " install test done "
 
 	unset BINDGEN_EXTRA_CLANG_ARGS LLVM_CONFIG
 }
