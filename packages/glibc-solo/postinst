@@ -1,0 +1,6 @@
+#!/bin/env bash
+echo '
+run this to boot strap glibc root
+apt -c $PREFIX/etc/apt/glibc.conf update
+apt -c $PREFIX/etc/apt/glibc.conf install apt-glibc
+'

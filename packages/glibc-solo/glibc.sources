@@ -1,0 +1,10 @@
+## See the sources.list(5) manual page for further settings.
+Types: deb
+URIs: https://packages-cf.termux.dev/apt/termux-glibc
+# URIs: https://packages.termux.dev/apt/termux-glibc
+Suites: glibc
+Components: stable
+# Signed-By: /data/data/com.termux/files/usr/etc/apt/trusted.gpg.d/2096779623.gpg
+Signed-By: /data/data/com.termux/files/usr/etc/apt/trusted.gpg.d/termux-autobuilds.gpg
+
+

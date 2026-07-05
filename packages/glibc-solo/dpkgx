@@ -1,0 +1,140 @@
+#!/bin/env bash
+# dpkg wrapper for apt
+# set -x
+# echo dpkgx $@
+# exit
+log=$HOME/apt/test/dpkg.log
+# rm $log
+# echo dpkgx $@ | tee -a $log
+isdry=false
+isdry=true
+
+dpkg(){
+	echo dpkg $@|tee -a $log
+	$isdry && return
+	$PREFIX/bin/dpkg $@
+}
+
+function dpkgx {
+# echo dpkg --admindir=$dpkg_root --instdir=$root $@ | tee -a $log
+dpkg --admindir=$dpkg_root --instdir=$root $@
+# echo dpkg $@
+# dpkg $@
+}
+
+function dpkgz {
+# dpkg --admindir=$dpkg_root --instdir=$root $@
+$PREFIX/bin/dpkg --admindir=$dpkg_root --instdir=$root $@
+}
+
+echo dpkgx $@ | tee -a $log
+
+# args=$@
+# args=("$@")
+# echo ${#args[@]}
+
+fd=1
+# for a in $@; do
+while test $# -gt 0; do
+	# echo 1=$1 2=$2
+	a=$1
+	case "$a" in
+		"--configure") action+=$a;;
+		"--pending") action+=$a;;
+		"--recursive") action+=$a; folder=$2 ;;
+		"--unpack") action+=$a;;
+		"--status-fd") fd=$2;;
+		"--root") root=$2; shift ;;
+	esac
+
+	case "$1" in
+		--print*|--assert*) exit 0;;
+	esac
+	# echo out $1 
+	shift
+	args+=($1)
+	# a=("${a[@]:1}")
+done
+
+# exit
+
+# echo fd=$fd
+# echo root=$root
+
+# for a in ${args[@]}; do
+# 	echo $a
+# done
+# exit
+
+# test -n "$DATA" || DATA=/data/data/com.termux
+# test -n "$G" || G=$GLIBC_PREFIX
+
+# echo $(date +"%H:%M:%S") dpkgx ${args[*]} | tee -a $log
+# echo dpkgx ${args[*]} | tee -a $log
+# exit
+
+# test -z "$DPKGX_ROOT" && echo error DPKGX_ROOT unset source $DATA/debian/bashrc first && exit
+test -z "$root" && echo error --root unset | tee -a $log && exit
+# root=$DPKGX_ROOT
+
+# dpkg_root=$root/dpkg
+dpkg_root=$root/var/lib/dpkg
+status=$dpkg_root/status
+# status=$HOME/trash/status
+# config=~/etc/debian
+# log=$dpkg_root/log
+
+function install {
+	for p in $@; do
+		if [[ "$p" != *.deb ]]; then continue; fi
+		# dpkgz -I $p|grep Package
+		# dpkgz -I $p|grep Package|cut -f3 -d" "
+		name=$(dpkgz -I $p|grep Package|cut -f3 -d" ")
+		# echo unpacking $name $p | tee -a $log
+		dpkg -x $p $root
+
+		echo "processing: install: $name" >&$fd
+		# echo "processing: upgrade: $name" >&$fd
+		echo "status: $name: half-installed" >&$fd
+		echo "status: $name: unpacked" >&$fd
+
+		# echo >> $status
+		# echo Package: $name >> $status
+		# echo "Status: install ok installed" >> $status
+		# echo "Version: 0" >> $status
+		
+done
+}
+
+case "$action" in
+	"--configure--pending")
+		echo skipping --configure | tee -a $log
+		
+		# echo "processing: configure: $name" >&$fd
+		# echo "status: $name: unpacked" >&$fd
+		# echo "status: $name: half-configured" >&$fd
+		# echo "status: $name: installed" >&$fd
+
+		# sed -i s,"Status: install".*,"Status: install ok installed", $U/dpkg/status
+		exit 0
+		;;
+
+	"--unpack--recursive")
+		# folder=$(echo $@|awk '{print $NF}')
+		for f in $(ls $folder); do
+			echo $f
+			install $folder/$f
+		done
+		exit 0
+		;;
+
+	"--unpack")
+		# install $@
+		install  ${args[@]}
+		exit 0
+		;;
+esac
+
+# dpkgx $@
+dpkgx ${args[@]}
+# exit 0

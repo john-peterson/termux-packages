@@ -1,0 +1,35 @@
+test -e $PREFIX/glibc/var/cache/apt/archives && echo yes
+
+install -Dm644 /dev/null "${TERMUX_PREFIX}/opt/vendor/lib/libOpenCL.so"
+install -Dm744 a b 
+
+mkdir -p ~/apt/test/var/lib/apt
+mkdir -p ~/apt/test/var/lib/dpkg
+# mkdir -p ~/apt/test/var/cache/apt/archives
+
+cp -rv $PREFIX/glibc/var/lib/apt/* ~/apt/test/var/lib/apt/
+cp -v $PREFIX/glibc/var/cache/apt/archives/linux-api* ~/apt/test/var/cache/apt/archives/
+
+conf=~/termux-packages/packages/glibc-solo/glibc.conf
+deb=/data/data/com.termux/files/usr/glibc/var/cache/apt/archives/linux-api-headers-glibc_6.14_aarch64.deb
+deb=/data/data/com.termux/files/usr/glibc/var/cache/apt/archives/which-glibc_2.23_aarch64.deb
+
+apt-config dump -c $conf|ack -i dpkg
+apt -c $conf list |wc
+apt -c $conf list --installed
+apt -c $conf install linux-api-headers-glibc
+apt -c $conf install glibc
+apt -c $conf install bash-glibc
+apt -c $conf install which-glibc
+apt -c $conf install sed-glibc
+apt -c $conf install apt-glibc
+apt -c $conf install apt-glibc dpkg-glibc
+
+~/termux-packages/packages/glibc-solo/dpkgx --root /data/data/com.termux/files/home/apt/test --status-fd 2 --no-triggers --unpack --auto-deconfigure$deb 
+
+dpkg --root /data/data/com.termux/files/home/apt/test --status-fd 2 --no-triggers --unpack --auto-deconfigure $deb 2>log
+dpkg --root /data/data/com.termux/files/home/apt/test --status-fd 2 --configure --pending 2>log
+
+cat data/data/com.termux/files/usr/var/lib/dpkg/status
+cat var/lib/dpkg/status
+
